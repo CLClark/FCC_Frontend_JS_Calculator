@@ -26,7 +26,7 @@ const bodyStyle = {
 }
 const buttonStyle = {
 	margin: "2% 1.6%",	
-	// height: "unset",
+	height: "3%",
 	flexBasis: "21%",	
 	borderSize: "2px",	
 	//borderColor located in stylesheet (selector on click)
@@ -34,9 +34,8 @@ const buttonStyle = {
 	borderRadius: "4px",
 	textAlign: "center",
 	//color style in child text element
-	backgroundColor: "#343331", /** override in component*/
-	height: "3%",
-	display: "flex",
+	backgroundColor: "#343331", /** override in component*/	
+	display: "inline",
 	justifyContent: "space-around"
 }
 const blankStyle = {
@@ -53,7 +52,7 @@ const blankStyle = {
 const buttonText = {
 	margin: "auto",
 	fontSize: "x-large",
-	color: "#e9e8e8"
+	color: "#e9e8e8"	
 }
 const numBlock = {
 	//container for number buttons
@@ -203,7 +202,8 @@ class CalcApp extends React.Component {
 			.then((finalStack) => {
 				//pass stack into processor...
 				let processedStack = this.procStack(finalStack);
-				//return value as firstValue in new stack, object of length 1				
+				//return value as firstValue in new stack, object of length 1
+				document.getElementById("display").innerText = processedStack;				
 				this.setState({
 					currentNum: processedStack,
 					cleared: false,
@@ -224,16 +224,16 @@ class CalcApp extends React.Component {
 				case "equals":
 					return {firstValue: accu.firstValue, operation: "equals"}
 				case "add":
-					newFirst = (Number.parseInt(accu.firstValue) + Number.parseInt(curr.firstValue)).toString();
+					newFirst = (Number.parseFloat(accu.firstValue) + Number.parseFloat(curr.firstValue)).toString();
 					return {firstValue: newFirst, operation: curr.operation}					
 				case "sub":
-					newFirst = (Number.parseInt(accu.firstValue) - Number.parseInt(curr.firstValue)).toString();
+					newFirst = (Number.parseFloat(accu.firstValue) - Number.parseFloat(curr.firstValue)).toString();
 					return {firstValue: newFirst, operation: curr.operation}
 				case "div":
-					newFirst = (Number.parseInt(accu.firstValue)/Number.parseInt(curr.firstValue)).toString();
+					newFirst = (Number.parseFloat(accu.firstValue)/Number.parseFloat(curr.firstValue)).toString();
 					return {firstValue: newFirst, operation: curr.operation}
 				case "mul":
-					newFirst = (Number.parseInt(accu.firstValue)*Number.parseInt(curr.firstValue)).toString();					
+					newFirst = (Number.parseFloat(accu.firstValue)*Number.parseFloat(curr.firstValue)).toString();					
 					return {firstValue: newFirst, operation: curr.operation};
 				default:
 					console.error("stack process error: default");
@@ -263,7 +263,8 @@ class Display extends React.Component {
 		return (
 		<div id="display-wrap" style={disStyle}>
 			<div id="display" style={disValues}>			
-				{this.props.show}
+				{/* {Number.parseFloat(this.props.show)} */}
+				{(this.props.show)}
 			</div>
 		</div>);
 	}
@@ -285,7 +286,7 @@ class Button extends React.Component {
 		const numEles = numArr.map((v,ind)=>{
 			return (<div id={v.nName} key={v.nName} className="calc-button" style={this.props.styleIn} 
 			onClick={() => this.useUpdater(v.nVal.toString())}>
-				<div style={buttonText}>{v.nVal}</div>
+				<span style={buttonText}>{v.nVal}</span>
 			</div>);
 		});
 		return (
@@ -310,7 +311,7 @@ class Equals extends React.Component {
 		super(props);
 	}
 	render() {
-		return (<div id="equals" className="calc-button" style={this.props.styleIn} onClick={ ()=> this.props.procEquals() }><div style={buttonText}>=</div></div>);
+		return (<div id="equals" className="calc-button" style={this.props.styleIn} onClick={ ()=> this.props.procEquals() }><span style={buttonText}>=</span></div>);
 	}
 }
 //CLEAR
@@ -321,7 +322,7 @@ class Clear extends React.Component {
 	render() {
 		let styler =  JSON.parse(JSON.stringify(this.props.styleIn));
 		styler.backgroundColor = "#feca20";
-		return (<div className="calc-button" style={styler} onClick={this.props.clearState}><div style={buttonText}>C</div></div>);
+		return (<div id="clear" className="calc-button" style={styler} onClick={this.props.clearState}><span style={buttonText}>C</span></div>);
 	}
 }
 //DECIMAL
@@ -330,7 +331,7 @@ class Decimal extends React.Component {
 		super(props);
 	}
 	render() {
-		return (<div className="calc-button" style={this.props.styleIn} onClick={ () => this.props.updateDecimal("decimal")} ><div style={buttonText}>.</div></div>);
+		return (<div id="decimal" className="calc-button" style={this.props.styleIn} onClick={ () => this.props.updateDecimal("decimal")} ><span style={buttonText}>.</span></div>);
 	}
 }
 //ADD button
@@ -339,8 +340,8 @@ class Add extends React.Component {
 		super(props);
 	}
 	render() {
-		return (<div className="calc-button" style={this.props.styleIn} onClick={ () => this.props.operAdd("add") }>
-		<div style={buttonText}>+</div></div>);
+		return (<div id="add" className="calc-button" style={this.props.styleIn} onClick={ () => this.props.operAdd("add") }>
+		<span style={buttonText}>+</span></div>);
 	}
 }
 //SUBTRACT button
@@ -349,8 +350,8 @@ class Subtract extends React.Component {
 		super(props);
 	}
 	render() {
-		return (<div className="calc-button" style={this.props.styleIn} onClick={ () => this.props.operAdd("sub") }>
-		<div style={buttonText}>-</div></div>);
+		return (<div id="subtract" className="calc-button" style={this.props.styleIn} onClick={ () => this.props.operAdd("sub") }>
+		<span style={buttonText}>-</span></div>);
 	}
 }
 //MULTIPLY button
@@ -359,8 +360,8 @@ class Multiply extends React.Component {
 		super(props);
 	}
 	render() {
-		return (<div className="calc-button" style={this.props.styleIn} onClick={ () => this.props.operAdd("mul") }>
-		<div style={buttonText}>×</div></div>);
+		return (<div id="multiply" className="calc-button" style={this.props.styleIn} onClick={ () => this.props.operAdd("mul") }>
+		<span style={buttonText}>*</span></div>);//×
 	}
 }
 //DIVIDE 
@@ -369,8 +370,8 @@ class Divide extends React.Component {
 		super(props);
 	}
 	render() {
-		return (<div className="calc-button" style={this.props.styleIn} onClick={ () => this.props.operAdd("div") }>
-		<div style={buttonText}>÷</div></div>);
+		return (<div id="divide" className="calc-button" style={this.props.styleIn} onClick={ () => this.props.operAdd("div") }>
+		<span style={buttonText}>÷</span></div>);
 	}
 }
 
