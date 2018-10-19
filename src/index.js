@@ -76,14 +76,12 @@ class CalcApp extends React.Component {
 			decToggle: false,
 			opStack: []
 		};
-		this.updateCurNum = this.updateCurNum.bind(this);
-		this.decimalHandler = this.decimalHandler.bind(this);
+		this.updateCurNum = this.updateCurNum.bind(this);		
 		this.clearState = this.clearState.bind(this);
 		this.operAdd = this.operAdd.bind(this);
 		this.procEquals = this.procEquals.bind(this);
 	}
-	updateCurNum(appendage) {
-		console.log(JSON.stringify(this.state));
+	updateCurNum(appendage) {		
 		let firstIs = new String(appendage);
 		let asIs;
 		if (this.state.newValue == false) {
@@ -152,91 +150,97 @@ class CalcApp extends React.Component {
 	clearState() {
 		this.setState({
 			currentNum: "0",
-			cleared: true,
+			newValue: false,			
 			decToggle: false,
 			opStack: []
 		});
 	}
 	operAdd(opName) {
-		console.log(JSON.stringify(this.state));
-		let currStack = Array.from(this.state.opStack);
-		let lastOp;
-		if (currStack.length > 0) {
-			lastOp = currStack[(currStack.length - 1)];
-			//set the operation object
-			lastOp.firstValue = this.state.currentNum;
-			lastOp.operation = opName;
-			currStack[(currStack.length - 1)] = lastOp;
-			//if opName not "equals", reset current value
-			if (opName !== "equals") {
+		return new Promise((resolve, reject) => {
+			let currStack = Array.from(this.state.opStack);
+			let lastOp;
+			if (currStack.length > 0) {
+				lastOp = currStack[(currStack.length - 1)];
+				//set the operation object
+				lastOp.firstValue = this.state.currentNum;
+				lastOp.operation = opName;
+				currStack[(currStack.length - 1)] = lastOp;
 				this.setState({
 					currentNum: this.state.currentNum,
 					opStack: currStack,
 					newValue: true, //expecting a new value
 					decToggle: false
 				}, () => {
+					if (opName == "equals") {
+						console.log("opName equals");
+						resolve(Array.from(this.state.opStack));						
+					}else{
+						return;
+					}					
+				});
+			} else {
+				//set up the first object...
+				lastOp = {
+					firstValue: this.state.currentNum,
+					operation: opName
+				};
+				this.setState({
+					// currentNum: "0",
+					newValue: true,
+					opStack: [lastOp],
+					decToggle: false
+				}, () => {						
 					console.log(JSON.stringify(this.state));
+					resolve(Array.from(this.state.opStack));			
 				});
 				return;
-			} else {
-				return currStack;
-			}
-		} else {
-			//set up the first object...
-			lastOp = {
-				firstValue: this.state.currentNum,
-				operation: opName
-			};
-			this.setState({
-				currentNum: "0",
-				newValue: true,
-				opStack: [lastOp],
-				decToggle: false
-			}, () => {
-				console.log(JSON.stringify(this.state));
-			});
-			return;
-		}
+			}//else, empty stack
+		});//promise
 	}
 	procEquals() {
-		//set stack final object to "equals"
-		// let currStack = Array.from(this.state.opStack);
-		let lastOp;
-		switch (this.state.cleared) {
-			case true:
-				//do nothing
-				break;
-			default: //stack has existing object?, update last's operation				
+		//set stack final object to "equals"		
+		this.operAdd("equals")
+			.then((finalStack) => {
 				//pass stack into processor...
-				let processedStack = this.procStack(this.state.opStack);
+				let processedStack = this.procStack(finalStack);
 				//return value as firstValue in new stack, object of length 1				
-				//set cleared equal to true... for new number inputs
-				this.setState({currentNum: processedStack, cleared: true, opStack:[{firstValue: processedStack}]});
-				break;
-		}
+				this.setState({
+					currentNum: processedStack,
+					cleared: false,
+					opStack: []
+				}, () => {
+					console.log("stack is: " + JSON.stringify(processedStack));
+				});
+			})
+			.catch((e) => { console.log(e); });
 	}
 	procStack(stackIn){
 		//iterate over stack, performing operation for each object until "equals" operation
 		let stackArr = Array.from(stackIn);
-		let finalResult = stackArr.reduce((accu, curr) => {
+		let finalResult = stackArr.reduce((accu, curr, cInd) => {
+			console.log(accu.firstValue + " | " + curr.firstValue);
+			let newFirst;
 			switch (accu.operation) {
 				case "equals":
-					return accu.firstValue;
+					return {firstValue: accu.firstValue, operation: "equals"}
 				case "add":
-					// let newFirst = (Number.parseInt(accu.firstValue) + Number.parseInt(curr.firstValue))
-					// return {firstValue: newFirst, operation: curr.operation}
-					return;
+					newFirst = (Number.parseInt(accu.firstValue) + Number.parseInt(curr.firstValue)).toString();
+					return {firstValue: newFirst, operation: curr.operation}					
 				case "sub":
-					return;
+					newFirst = (Number.parseInt(accu.firstValue) - Number.parseInt(curr.firstValue)).toString();
+					return {firstValue: newFirst, operation: curr.operation}
 				case "div":
-					return;
+					newFirst = (Number.parseInt(accu.firstValue)/Number.parseInt(curr.firstValue)).toString();
+					return {firstValue: newFirst, operation: curr.operation}
 				case "mul":
-					return;
+					newFirst = (Number.parseInt(accu.firstValue)*Number.parseInt(curr.firstValue)).toString();					
+					return {firstValue: newFirst, operation: curr.operation};
 				default:
-					return {firstValue: 0, operation: "equals"}
+					console.error("stack process error: default");
+					return {firstValue: accu.firstValue, operation: "equals"}					
 			}//switch
-		})
-		return finalResult;
+		});		
+		return finalResult.firstValue;
 	}
 	render() {
 		return (<div id="calc-body" style={bodyStyle}>
