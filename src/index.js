@@ -72,7 +72,7 @@ class CalcApp extends React.Component {
 		super(props);
 		this.state = {
 			currentNum: "0",
-			cleared: true,
+			newValue: false,
 			decToggle: false,
 			opStack: []
 		};
@@ -83,36 +83,73 @@ class CalcApp extends React.Component {
 		this.procEquals = this.procEquals.bind(this);
 	}
 	updateCurNum(appendage) {
+		console.log(JSON.stringify(this.state));
 		let firstIs = new String(appendage);
 		let asIs;
-		switch (this.state.cleared) {
-			case (false): //existing display value already, concat
-			(this.state.currentNum !== "0") ? asIs = this.state.currentNum.concat(firstIs) : asIs = firstIs;				
+		if (this.state.newValue == false) {
+			switch (appendage) {
+				case "decimal":
+					if (this.state.decToggle) {
+						return;
+					} else { //add the decimal
+						asIs = this.state.currentNum.concat(".");
+						this.setState({
+							currentNum: asIs,
+							decToggle: true
+						}, () => {
+							console.log(JSON.stringify(this.state));
+						});
+					}
+					break;
+				case "0":
+					if (this.state.currentNum == "0") {
+						return;
+					} else {
+						asIs = this.state.currentNum.concat(firstIs);
+						this.setState({
+							currentNum: asIs
+						}, () => {
+							console.log(JSON.stringify(this.state));
+						});
+						break;
+					}//else					
+				default: //a number
+					(this.state.currentNum == "0") ? asIs = firstIs : asIs = this.state.currentNum.concat(firstIs);
+					this.setState({
+						currentNum: asIs
+					}, () => {
+						console.log(JSON.stringify(this.state));
+					});
+					break;
+			}
+		} else { //newValue expected
+			let newCurr; let decTest;
+			if (appendage == "decimal") { //is a decimal
+				newCurr = "0.";
+				decTest = true;
+			} else { //not a decimal
+				newCurr = appendage;
+				decTest = false;
+			}
+			let currStack = Array.from(this.state.opStack);
+			let lastOp;
+			if (currStack.length > 0) {
+				// currStack[(currStack.length - 1)].firstValue = this.state.currentNum;
+				currStack.push({
+					firstValue: this.state.currentNum
+				}); //space for this current inputting value
 				this.setState({
-					currentNum: asIs });
-				break;
-			default: //true
-				this.setState({ 
-					cleared: false,
-					currentNum: firstIs });				
-				break;
-		}
-	}
-	decimalHandler(){
-		switch (this.state.decToggle) {
-			case true:
-				//do nothing
-				break;		
-			default://false, update currentNum
-				let newCurNum = this.state.currentNum.concat('.');
-				this.setState({
-					decToggle: true,
-					currentNum: newCurNum
+					currentNum: newCurr,
+					newValue: false,
+					opStack: currStack,
+					decToggle: decTest
+				}, () => {
+					console.log(JSON.stringify(this.state));
 				});
-				break;
+			}//length > 0
 		}
 	}
-	clearState(){
+	clearState() {
 		this.setState({
 			currentNum: "0",
 			cleared: true,
@@ -121,7 +158,7 @@ class CalcApp extends React.Component {
 		});
 	}
 	operAdd(opName) {
-		console.log('operadd function'); //testing
+		console.log(JSON.stringify(this.state));
 		let currStack = Array.from(this.state.opStack);
 		let lastOp;
 		if (currStack.length > 0) {
@@ -132,9 +169,14 @@ class CalcApp extends React.Component {
 			currStack[(currStack.length - 1)] = lastOp;
 			//if opName not "equals", reset current value
 			if (opName !== "equals") {
-				//add new number object... to stack
-				currStack.push({});
-				this.setState({ currentNum: "0", opStack: currStack });
+				this.setState({
+					currentNum: this.state.currentNum,
+					opStack: currStack,
+					newValue: true, //expecting a new value
+					decToggle: false
+				}, () => {
+					console.log(JSON.stringify(this.state));
+				});
 				return;
 			} else {
 				return currStack;
@@ -143,23 +185,30 @@ class CalcApp extends React.Component {
 			//set up the first object...
 			lastOp = {
 				firstValue: this.state.currentNum,
-				operation: opName};
-			this.setState({ currentNum: "0", opStack: [lastOp] });
-			 return; 
+				operation: opName
+			};
+			this.setState({
+				currentNum: "0",
+				newValue: true,
+				opStack: [lastOp],
+				decToggle: false
+			}, () => {
+				console.log(JSON.stringify(this.state));
+			});
+			return;
 		}
 	}
 	procEquals() {
 		//set stack final object to "equals"
-		let currStack = Array.from(this.state.opStack);
+		// let currStack = Array.from(this.state.opStack);
 		let lastOp;
 		switch (this.state.cleared) {
 			case true:
 				//do nothing
 				break;
-			default: //stack has existing object, update last's operation					
-				let stackToProc = this.operAdd("equals");
+			default: //stack has existing object?, update last's operation				
 				//pass stack into processor...
-				let processedStack = this.procStack(stackToProc);
+				let processedStack = this.procStack(this.state.opStack);
 				//return value as firstValue in new stack, object of length 1				
 				//set cleared equal to true... for new number inputs
 				this.setState({currentNum: processedStack, cleared: true, opStack:[{firstValue: processedStack}]});
@@ -174,8 +223,15 @@ class CalcApp extends React.Component {
 				case "equals":
 					return accu.firstValue;
 				case "add":
-					let newFirst = (Number.parseInt(accu.firstValue) + Number.parseInt(curr.firstValue))
-					return {firstValue: newFirst, operation: curr.operation}			
+					// let newFirst = (Number.parseInt(accu.firstValue) + Number.parseInt(curr.firstValue))
+					// return {firstValue: newFirst, operation: curr.operation}
+					return;
+				case "sub":
+					return;
+				case "div":
+					return;
+				case "mul":
+					return;
 				default:
 					return {firstValue: 0, operation: "equals"}
 			}//switch
@@ -186,11 +242,11 @@ class CalcApp extends React.Component {
 		return (<div id="calc-body" style={bodyStyle}>
 			<Display show={this.state.currentNum}/>			
 			<Button styleIn={buttonStyle} 
-			updateCurrent={this.updateCurNum} 
-			updateDecimal={this.decimalHandler}
+			updateCurrent={this.updateCurNum} 			
 			clearState={this.clearState}
 			operAdd={this.operAdd}
-			procEquals = {this.procEquals} />
+			procEquals = {this.procEquals} 
+			/>
 		</div>);
 	}
 }
@@ -224,14 +280,14 @@ class Button extends React.Component {
 			{nVal: 9, nName: "nine"},{nVal: 8, nName: "eight"},{nVal: 7, nName: "seven"}];		
 		const numEles = numArr.map((v,ind)=>{
 			return (<div id={v.nName} key={v.nName} className="calc-button" style={this.props.styleIn} 
-			onClick={() => this.useUpdater(v.nVal)}>
+			onClick={() => this.useUpdater(v.nVal.toString())}>
 				<div style={buttonText}>{v.nVal}</div>
 			</div>);
 		});
 		return (
 			<div id="numbers" style={numBlock} >
 				{numEles.reverse()}
-				<Decimal styleIn={this.props.styleIn} updateDecimal={this.props.updateDecimal}/>
+				<Decimal styleIn={this.props.styleIn} updateDecimal={this.props.updateCurrent}/>
 				<div style={blankStyle}></div>
 				{/** math operations */}
 				<Add styleIn={this.props.styleIn} operAdd={this.props.operAdd} />
@@ -270,7 +326,7 @@ class Decimal extends React.Component {
 		super(props);
 	}
 	render() {
-		return (<div className="calc-button" style={this.props.styleIn} onClick={this.props.updateDecimal}><div style={buttonText}>.</div></div>);
+		return (<div className="calc-button" style={this.props.styleIn} onClick={ () => this.props.updateDecimal("decimal")} ><div style={buttonText}>.</div></div>);
 	}
 }
 //ADD button
