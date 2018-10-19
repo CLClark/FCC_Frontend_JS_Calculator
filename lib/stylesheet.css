@@ -1,0 +1,13 @@
+.calc-button:hover{
+	cursor: pointer;	
+}
+.calc-button:active{
+	/* zoom: .8; */
+	border-style: inset;
+	border-color: unset;
+}
+.calc-button{
+	cursor: pointer;	
+	border-style: solid;
+	border-color: "#1a1214";
+}

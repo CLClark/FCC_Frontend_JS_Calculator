@@ -1,0 +1,30 @@
+{
+	"name": "clclark-fcc-javascript-calc",
+	"version": "1.0.1",
+	"description": "Javascript Calculator for Free Code Camp requirements",
+	"main": "server.js",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/CLClark/"
+	},
+	"homepage": "https://null",
+	"bugs": "https://github.com/CLClark/",
+	"keywords": [
+		"Express",
+		"Node",
+		"javascript"
+	],
+	"scripts": {
+		"start": "node server.js"
+	},
+	"authors": "Chris L Clark",
+	"license": "MIT",
+	"dependencies": {
+		"express": "^4.16.4"
+	},
+	"devDependencies": {
+		"@babel/cli": "^7.1.2",
+		"@babel/core": "^7.1.2",
+		"@babel/plugin-transform-react-jsx": "^7.0.0"
+	}
+}

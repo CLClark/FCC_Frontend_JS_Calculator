@@ -1,0 +1,5 @@
+userstories.odt
+package-lock.json
+node_modules/
+.vscode/
+git check-ignore -v
