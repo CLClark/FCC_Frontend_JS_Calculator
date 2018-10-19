@@ -73,12 +73,16 @@ class CalcApp extends React.Component {
 			currentNum: "0",
 			newValue: false,
 			decToggle: false,
-			opStack: []
+			opStack: [],
+			currentEval: []
 		};
 		this.updateCurNum = this.updateCurNum.bind(this);		
 		this.clearState = this.clearState.bind(this);
 		this.operAdd = this.operAdd.bind(this);
 		this.procEquals = this.procEquals.bind(this);
+		this.updateEvalArray = this.updateEvalArray.bind(this);
+		this.switchLastOperator = this.switchLastOperator.bind(this);
+		this.transpileOpCode = this.transpileOpCode.bind(this);
 	}
 	updateCurNum(appendage) {		
 		let firstIs = new String(appendage);
@@ -131,7 +135,6 @@ class CalcApp extends React.Component {
 			let currStack = Array.from(this.state.opStack);
 			let lastOp;
 			if (currStack.length > 0) {
-				// currStack[(currStack.length - 1)].firstValue = this.state.currentNum;
 				currStack.push({
 					firstValue: this.state.currentNum
 				}); //space for this current inputting value
@@ -151,25 +154,27 @@ class CalcApp extends React.Component {
 			currentNum: "0",
 			newValue: false,			
 			decToggle: false,
-			opStack: []
+			opStack: [],
+			currentEval: []
 		});
 	}
-	operAdd(opName) {
+	operAddOld(opName) {
 		return new Promise((resolve, reject) => {
 			let currStack = Array.from(this.state.opStack);
 			let lastOp;
+			//this is the first operation value
 			if (currStack.length > 0) {
 				lastOp = currStack[(currStack.length - 1)];
 				//set the operation object
 				lastOp.firstValue = this.state.currentNum;
 				lastOp.operation = opName;
-				currStack[(currStack.length - 1)] = lastOp;
+				currStack[(currStack.length - 1)] = lastOp;				
 				this.setState({
 					currentNum: this.state.currentNum,
 					opStack: currStack,
 					newValue: true, //expecting a new value
 					decToggle: false
-				}, () => {
+				}, () => {					
 					if (opName == "equals") {
 						console.log("opName equals");
 						resolve(Array.from(this.state.opStack));						
@@ -178,7 +183,7 @@ class CalcApp extends React.Component {
 					}					
 				});
 			} else {
-				//set up the first object...
+				//set up the first object...				
 				lastOp = {
 					firstValue: this.state.currentNum,
 					operation: opName
@@ -191,19 +196,63 @@ class CalcApp extends React.Component {
 				}, () => {						
 					console.log(JSON.stringify(this.state));
 					resolve(Array.from(this.state.opStack));			
-				});
+				});			
 				return;
 			}//else, empty stack
 		});//promise
 	}
+	operAdd(opName){
+		const transOp = this.transpileOpCode(opName);
+		//alternate logic:
+		return new Promise((resolve, reject) => {
+			let currEval = Array.from(this.state.currentEval);			
+			if (currEval.length > 0) {				
+				this.switchLastOperator(transOp);		
+				
+			} else {
+				//initialize it evalString...
+				let firstValue = this.state.currentNum;				
+				this.setState({
+					newValue: true,
+					currentEval: [firstValue, transOp],
+					decToggle: false
+				}, () => {						
+					console.log(JSON.stringify(this.state));
+					resolve(Array.from(this.state.currentEval));			
+				});				
+			}			
+		});		
+	}
 	procEquals() {
+		let currEval = Array.from(this.state.currentEval);
+		//alternate logic:
+		let regex = /[\+\-\\\*\=]/g;
+		let lastString = new String(currEval[(currEval.length-1)]);
+		if(lastString.match(regex)){ //final item is an operator... remove it and calculate
+			let finalEval = currEval.splice(currEval.length-1,1);
+			let opString = finalEval.join(" ");
+			console.log(opString);
+			let opResult = eval(opString);
+			document.getElementById("display").innerText = opResult;
+			this.setState({
+				currentEval: opResult
+			});
+		}else{ //final item is not an operator
+			let opString = currEval.join(" ");
+			console.log(opString);
+			let opResult = eval(opString);
+			document.getElementById("display").innerText = opResult;
+			this.setState({
+				currentEval: [opResult]
+			});
+		}
+		//old logic...		
 		//set stack final object to "equals"		
 		this.operAdd("equals")
 			.then((finalStack) => {
 				//pass stack into processor...
 				let processedStack = this.procStack(finalStack);
 				//return value as firstValue in new stack, object of length 1
-				document.getElementById("display").innerText = processedStack;				
 				this.setState({
 					currentNum: processedStack,
 					cleared: false,
@@ -242,6 +291,62 @@ class CalcApp extends React.Component {
 		});		
 		return finalResult.firstValue;
 	}
+	updateEvalArray(whatVal){
+		return new Promise((resolve, reject) => {
+			let currEval = Array.from(this.state.currentEval);
+			currEval.push(whatVal);
+			this.setState({
+				currentEval: currEval
+			},() => {
+				resolve(this.state.currentEval);
+			});	
+		});		
+	}	
+	switchLastOperator(whatOp){
+		const opString = this.transpileOpCode(whatOp);		
+		//replaces the last object in the eval array with a new operator
+		let currEval = Array.from(this.state.currentEval);
+		if(currEval.length == 0){
+			//no existing obj's, add a 0 and the operator
+			currEval = this.updateEvalArray("0");
+			currEval.push(opString);
+			this.setState({
+				currentEval: currEval
+			});
+		}else{
+			let regex = /[\+\-\\\*]/g;
+			let lastString = new String(currEval[(currEval.length-1)]);
+			if(lastString.match(regex)){
+				//replacing last operator
+				console.log(lastString + " :matched the regex");
+				currEval.splice((currEval.length-1),1,[opString]);
+				this.setState({
+					currentEval: currEval
+				});				
+			}else{
+				//regex did not match an operator
+				currEval.push(opString);
+				this.setState({
+					currentEval: currEval
+				});
+			}//else
+		}//array has items...		
+	}
+	transpileOpCode(opName){
+		//first, transpile the op code
+		switch (opName) {
+			case "add": return "+"
+			case "sub": return "-"
+			case "mul": return "*"
+			case "div": return "/"
+			case "equals": return "="
+			default:
+				return opName;				
+		}
+	}
+	componentDidMount(){
+		console.log(this.state.currentEval);
+	}
 	render() {
 		return (<div id="calc-body" style={bodyStyle}>
 			<Display show={this.state.currentNum}/>			
@@ -258,7 +363,7 @@ class CalcApp extends React.Component {
 class Display extends React.Component {
 	constructor(props) {
 		super(props);
-	}
+	}	
 	render() {
 		return (
 		<div id="display-wrap" style={disStyle}>
@@ -361,7 +466,7 @@ class Multiply extends React.Component {
 	}
 	render() {
 		return (<div id="multiply" className="calc-button" style={this.props.styleIn} onClick={ () => this.props.operAdd("mul") }>
-		<span style={buttonText}>*</span></div>);//×
+		<span style={buttonText}>×</span></div>);//×
 	}
 }
 //DIVIDE 
