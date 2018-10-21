@@ -103,7 +103,7 @@ class CalcApp extends React.Component {
 							currentNum: asIs,
 							decToggle: true							
 						}, () => {
-							console.log(this.state);
+							// console.log(this.state);
 						});
 					}
 					break;
@@ -117,7 +117,7 @@ class CalcApp extends React.Component {
 							currentNum: asIs,
 							lastPressed: "num"						
 						}, () => {
-							console.log(this.state);
+							// console.log(this.state);
 						});
 						break;
 					}//else					
@@ -128,7 +128,7 @@ class CalcApp extends React.Component {
 						currentNum: asIs,
 						lastPressed: "num"						
 					}, () => {												
-						console.log(this.state);
+						// console.log(this.state);
 					});
 					break;
 			}//switch
@@ -154,7 +154,7 @@ class CalcApp extends React.Component {
 				decToggle: false,
 				currentEval: nowArray				
 			}, () => {		
-				console.log(this.state);
+				// console.log(this.state);
 			});//setState
 		} else {			
 			nowArray.push(this.state.currentNum, this.transpileOpCode(opName));
@@ -163,7 +163,7 @@ class CalcApp extends React.Component {
 				decToggle: false,
 				lastPressed: "op"			
 			}, () => {
-				console.log(this.state);
+				// console.log(this.state);
 			});
 		}//else
 	}
