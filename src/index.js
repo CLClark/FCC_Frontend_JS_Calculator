@@ -157,13 +157,25 @@ class CalcApp extends React.Component {
 	operAdd(opName){
 		const transOp = this.transpileOpCode(opName);
 		//alternate logic:
-		// return new Promise((resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			let currEval = Array.from(this.state.currentEval);			
 			if (currEval.length > 0) {
 			//evalString already exists			
-				let regex = /[\+\-\\\*\=]/g;
+				let regex = /[\+\-\\\*]/g;
 				let lastString = new String(currEval[(currEval.length-1)]);
-				if(lastString.match(regex) && this.state.newValue){				
+				if(opName == "equals" || opName == "="){
+					//user looking for "evaluation," push the number
+					currEval.push(this.state.currentNum);
+					this.setState({
+						currentNum: this.state.currentNum,
+						currentEval: currEval,
+						newValue: true, //expecting a new value
+						decToggle: false
+					},() => {
+						// resolve(Array.from(this.state.currentEval));							
+						resolve(currEval);
+					});						
+				} else if(lastString.match(regex) && this.state.newValue){				
 				//operator already exists... replace it					
 					console.log(lastString + " :matched the regex");
 					currEval.splice((currEval.length-1),1,transOp);
@@ -173,21 +185,21 @@ class CalcApp extends React.Component {
 						newValue: true, //expecting a new value
 						decToggle: false
 					},() => {
-						// resolve(Array.from(this.state.currentEval));	
-						return (Array.from(this.state.currentEval));	
+						resolve(Array.from(this.state.currentEval));	
+						// return (Array.from(this.state.currentEval));	
 					});				
 				}else{
 				//operator did not match, push number and operator
 					currEval.push(this.state.currentNum, transOp);
 					// currEval.push(transOp);
-					return this.setState({
+					this.setState({
 						currentNum: this.state.currentNum,
 						currentEval: currEval,
 						newValue: true, //expecting a new value
 						decToggle: false
 					},() => {
-						// resolve(Array.from(this.state.currentEval));	
-						return(Array.from(this.state.currentEval));
+						resolve(Array.from(this.state.currentEval));	
+						// return(Array.from(this.state.currentEval));
 					});	
 				}//else	
 			} else {
@@ -199,15 +211,15 @@ class CalcApp extends React.Component {
 					decToggle: false
 				}, () => {						
 					console.log(JSON.stringify(this.state));
-					// resolve(Array.from(this.state.currentEval));	
-					return (Array.from(this.state.currentEval));		
+					resolve(Array.from(this.state.currentEval));	
+					// return (Array.from(this.state.currentEval));		
 				});				
 			}			
-		// });		
+		});		
 	}
 	//process an equals click
 	procEquals() {
-		// this.operAdd("equals").then((finalStack) => {
+		this.operAdd("equals").then((finalStack) => {
 			let finalStack = this.operAdd("equals");
 			let currEval = Array.from(finalStack);
 			//alternate logic:
@@ -237,7 +249,7 @@ class CalcApp extends React.Component {
 					currentEval: [opResult]
 				});
 			}//else		
-		// }).catch((e) => {console.log(e);});
+		}).catch((e) => {console.log(e);});
 		/* //old logic...		
 		//set stack final object to "equals"		
 	 		this.operAdd("equals")
@@ -271,8 +283,14 @@ class CalcApp extends React.Component {
 		console.log(this.state.currentEval);
 	}
 	render() {
-		return (<div id="calc-body" style={bodyStyle}>
-			<Display show={this.state.currentNum}/>			
+		return (
+		<div id="calc-body" style={bodyStyle}>
+			{/* <Display show={this.state.currentNum}/>			 */}
+			<div id="display-wrap" style={disStyle}>
+			<div id="display" style={disValues}>
+				{this.state.currentNum}
+			</div>
+		</div>
 			<Button styleIn={buttonStyle} 
 			updateCurrent={this.updateCurNum} 			
 			clearState={this.clearState}
